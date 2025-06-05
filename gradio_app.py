@@ -60,7 +60,7 @@ def train_initial_models(df):
 
 def predict_salary(seniority, gdp_mln_usd, exchange_rate, google_search, consumption_expenditure,
                   delta_gdp, percent_delta_gdp, cpi, avg_salary_usd, delta_salary_usd,
-                  percent_delta_salary_usd, year, half, cleaned, lag_2, lag_4):
+                  percent_delta_salary_usd, year, half, cleaned, lag_2):
     """Передбачення зарплати на основі вхідних параметрів"""
     
     global models, feature_columns
@@ -120,10 +120,7 @@ def predict_salary(seniority, gdp_mln_usd, exchange_rate, google_search, consump
         
         # Передбачення
         prediction = model.predict(X_input)[0]
-        
-        # Додаткові розрахунки
-        salary_usd = prediction / exchange_rate
-        
+
         result = f"""
 🎯 **Прогноз зарплати для {seniority.upper()}:**
 
@@ -133,7 +130,7 @@ def predict_salary(seniority, gdp_mln_usd, exchange_rate, google_search, consump
 📈 **Вхідні параметри:**
 • GDP: {gdp_mln_usd:,} млн USD
 • Пошуки "data science": {google_search}
-• Споживчі витрати: {consumption_expenditure:,} млн UAH
+• Споживчі витрати: {consumption_expenditure:,} млн USD
 • Індекс споживчих цін: {cpi:.1f}
 • Рік/півріччя: {year}/{half}
 • Лаг 2 періоди: {lag_2:,.0f} UAH
@@ -143,19 +140,6 @@ def predict_salary(seniority, gdp_mln_usd, exchange_rate, google_search, consump
         
     except Exception as e:
         return f"❌ Помилка при передбаченні: {str(e)}"
-
-
-def load_custom_model(csv_file):
-    """Завантаження власної моделі з CSV файлу"""
-    if csv_file is None:
-        return "❌ Файл не завантажено"
-    
-    try:
-        result = train_initial_models(csv_file.name)
-        return f"✅ {result}"
-    except Exception as e:
-        return f"❌ Помилка завантаження: {str(e)}"
-
 
 # Створення Gradio інтерфейсу
 def create_gradio_app():
@@ -187,7 +171,7 @@ def create_gradio_app():
                 gdp = gr.Number(label="GDP (млн USD)", value=153781)
                 exchange_rate = gr.Number(label="Курс UAH/USD", value=41.5)
                 google_search = gr.Number(label="Google пошуки 'data science'", value=75, precision=0)
-                consumption = gr.Number(label="Споживчі витрати (млн UAH)", value=150000)
+                consumption = gr.Number(label="Споживчі витрати (млн USD)", value=150000)
                 lag_2 = gr.Number(label="Лаг 2 (USD)", value=1160)
                 with gr.Row():
                     delta_gdp = gr.Number(label="Δ GDP", value=0)
@@ -213,7 +197,7 @@ def create_gradio_app():
             fn=predict_salary,
             inputs=[seniority, gdp, exchange_rate, google_search, consumption,
                    delta_gdp, percent_delta_gdp, cpi, avg_salary_usd, delta_salary_usd,
-                   percent_delta_salary, year, half, cleaned, lag_2, lag_4],
+                   percent_delta_salary, year, half, cleaned, lag_2],
             outputs=prediction_output
         )
         
