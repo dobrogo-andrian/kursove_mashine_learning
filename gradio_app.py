@@ -5,7 +5,6 @@ from xgboost import XGBRegressor
 import pickle
 import os
 
-# Глобальні змінні для зберігання моделей
 models = {}
 feature_columns = []
 #csv_path = os.path.join('.', 'cleaned_df', 'cleaned_df.csv')
@@ -56,7 +55,6 @@ def train_initial_models(df):
         models[level] = train_ml_model_for_seniority(df, level)
         print(f"✅ Модель для {level} натренована")
     
-    #return f"Натреновано {len(models)} моделей для рівнів: {', '.join(models.keys())}"
 
 def predict_salary(seniority, gdp_mln_usd, exchange_rate, google_search, consumption_expenditure,
                   delta_gdp, percent_delta_gdp, cpi, avg_salary_usd, delta_salary_usd,
@@ -94,14 +92,11 @@ def predict_salary(seniority, gdp_mln_usd, exchange_rate, google_search, consump
         
         df_input = pd.DataFrame(input_data)
         
-        # Отримання порядку ознак з натренованої моделі
         model = models[seniority]
         
-        # Якщо у моделі є атрибут feature_names_in_ (sklearn >= 0.24)
         if hasattr(model, 'feature_names_in_'):
             expected_features = model.feature_names_in_
         else:
-            # Використовуємо порядок з помилки
             expected_features = [
                 'gdp_mln_usd', 'delta_gdp_mln_usd', 'lag_2', 'year', 'half', 
                 'final_consumption_expenditure', 'cleaned', 'delta_average_salary_usd', 
@@ -110,15 +105,12 @@ def predict_salary(seniority, gdp_mln_usd, exchange_rate, google_search, consump
                 'google_search_for_data_science'
             ]
         
-        # Перевірка наявності всіх потрібних ознак
         missing_features = [col for col in expected_features if col not in df_input.columns]
         if missing_features:
             return f"❌ Відсутні ознаки: {', '.join(missing_features)}"
         
-        # Підготовка даних у правильному порядку
         X_input = df_input[expected_features]
         
-        # Передбачення
         prediction = model.predict(X_input)[0]
 
         result = f"""
@@ -141,7 +133,6 @@ def predict_salary(seniority, gdp_mln_usd, exchange_rate, google_search, consump
     except Exception as e:
         return f"❌ Помилка при передбаченні: {str(e)}"
 
-# Створення Gradio інтерфейсу
 def create_gradio_app():
     """Створення Gradio додатку для передбачення зарплат"""
 
@@ -192,7 +183,6 @@ def create_gradio_app():
             gr.Markdown("### 📈 Результат прогнозу")
             prediction_output = gr.Markdown(value="Введіть параметри та натисніть 'Передбачити зарплату'")
 
-        # Обробники подій
         predict_btn.click(
             fn=predict_salary,
             inputs=[seniority, gdp, exchange_rate, google_search, consumption,
@@ -214,7 +204,6 @@ def create_gradio_app():
     
     return app
 
-# Запуск додатку
 if __name__ == "__main__":
     df = load_df(csv_path)
     print(df.head())
